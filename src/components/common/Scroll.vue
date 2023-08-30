@@ -32,12 +32,7 @@ export default {
   emits: ['onScroll'],
   setup (props, { emit }) {
     const { ctx } = getCurrentInstance()
-    onMounted(() => {
-      if (ctx.$refs.scrollWrapper) {
-        ctx.$refs.scrollWrapper.style.height = window.innerHeight - realPx(props.top) - realPx(props.bottom) + 'px'
-        ctx.$refs.scrollWrapper.addEventListener('scroll', handleScroll)
-      }
-    })
+    onMounted(() => refresh())
     const handleScroll = (e) => {
       const offsetY = e.target.scrollTop || window.pageYOffset || document.body.scrollTop
       emit('onScroll', offsetY)
@@ -45,9 +40,16 @@ export default {
     const scrollTo = (x, y) => {
       ctx.$refs.scrollWrapper.scrollTo(x, y)
     }
+    const refresh = () => { // 重新計算整個滾動調高度
+      if (ctx.$refs.scrollWrapper) { // 選定 DOM 節點
+        ctx.$refs.scrollWrapper.style.height = window.innerHeight - realPx(props.top) - realPx(props.bottom) + 'px'
+        ctx.$refs.scrollWrapper.addEventListener('scroll', handleScroll)
+      }
+    }
     return {
       handleScroll,
-      scrollTo
+      scrollTo,
+      refresh
     }
   }
 }

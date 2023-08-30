@@ -1,4 +1,5 @@
 import { saveLocation, getReadTime, getBookmark } from '@/utils/localStorage'
+import { computed } from 'vue'
 
 export const useProgressEffect = (store) => {
   // 更新此章節的進度百分比
@@ -33,9 +34,15 @@ export const useProgressEffect = (store) => {
   const getReadTimeText = (proxy) => {
     return proxy.$t('book.haveRead').replace('$1', getReadTimeByMinute(store))
   }
+
+  // 顯示章節名
+  const getSectionName = computed(() => {
+    return store.getters.navigation?.[store.getters.section].label || ''
+  })
   return {
     refreshLocation,
     getReadTimeByMinute,
-    getReadTimeText
+    getReadTimeText,
+    getSectionName
   }
 }

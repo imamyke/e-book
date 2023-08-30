@@ -55,5 +55,29 @@ export const getters = {
   },
   isBookmark: (state) => {
     return state.book.isBookmark
+  },
+  hotSearchOffsetY: (state) => {
+    return state.store.hotSearchOffsetY
+  },
+  flapCardVisible: (state) => {
+    return state.store.flapCardVisible
+  },
+  isEditMode: (state) => {
+    return state.store.isEditMode
+  },
+  shelfList: (state) => {
+    return state.store.shelfList
+  },
+  shelfSelected: (state) => {
+    return state.store.shelfSelected
+  },
+  shelfTitleVisible: (state) => {
+    return state.store.shelfTitleVisible
+  },
+  shelfCategory: (state) => {
+    return state.store.shelfCategory
+  },
+  currentType: (state) => {
+    return state.store.currentType
   }
 }

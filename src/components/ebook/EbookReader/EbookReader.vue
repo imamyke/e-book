@@ -6,13 +6,16 @@
       @click="handleMaskClick"
       @touchmove="pullDown"
       @touchend="pullDownEnd"
+      @mousedown.left="handleMouseEnter"
+      @mousemove.left="handleMouseMove"
+      @mouseup.left="handleMouseEnd"
     ></div>
   </div>
 </template>
 
 <script>
 import Epub from 'epubjs'
-import { getCurrentInstance, computed } from 'vue'
+import { getCurrentInstance, computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute } from 'vue-router'
 import { ebookMixin } from '@/utils/mixin'
@@ -21,6 +24,7 @@ import { useInitEffect } from './useInitEffect'
 import { getFontSize, getLocation } from '@/utils/localStorage'
 import { useProgressEffect } from '@/components/ebook/ebookMenu/EbookSettingProgress/useProgressEffect'
 import { useEbookEffect } from './useEbookEffect'
+import { getLocalForage } from '@/utils/localForage'
 
 global.ePub = Epub
 export default {
@@ -29,7 +33,7 @@ export default {
   setup () {
     const route = useRoute()
     const store = useStore()
-    const { dispatch } = store
+    const { dispatch, getters } = store
     const { proxy } = getCurrentInstance()
     const { refreshLocation } = useProgressEffect(store)
     const themes = computed(() => {
@@ -50,11 +54,46 @@ export default {
       pullDown,
       pullDownEnd
     } = useEbookEffect(store)
+    // 鼠標示件 => 進入/進入後的移動/從移動狀態移出/還原
+    const handleMouseEnter = (e) => {
+      getters.mouseState = 1
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    const handleMouseMove = (e) => {
+      if (getters.mouseState === 1) {
+        getters.mouseState = 2
+      } else if (getters.mouseState === 2) {
+        let offsetY = 0
+        if (getters.firstOffsetY) {
+          offsetY = e.clientY - getters.firstOffsetY
+          dispatch('setOffsetY', offsetY)
+        } else {
+          getters.firstOffsetY = e.clientY
+        }
+      }
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    const handleMouseEnd = (e) => {
+      if (getters.mouseState === 2) {
+        dispatch('setOffsetY', 0)
+        getters.firstOffsetY = null
+        getters.mouseState = 3
+      } else {
+        getters.mouseState = 4
+      }
+      const time = e.timeStamp - getters.mouseStartTime
+      if (time < 200) {
+        getters.mouseState = 4
+      }
+      e.preventDefault()
+      e.stopPropagation()
+    }
     const handleMaskClick = (e) => {
-      console.log(e)
+      if (getters.mouseState && (getters.mouseState === 2 || getters.mouseState === 3)) return
       const offsetX = e.offsetX
       const width = window.innerWidth
-      console.log(width * 0.3)
       if (offsetX > 0 && offsetX < width * 0.3) {
         prevPage()
       } else if (offsetX > 0 && offsetX > width * 0.7) {
@@ -66,19 +105,12 @@ export default {
     // 初始化閱讀器
     const fileName = route.params.fileName.split('|').join('/')
     const url = `${process.env.VUE_APP_RES_URL}/epub/${fileName}.epub`
-    const book = new Epub(url)
-    const rendition = book.renderTo('read', {
-      width: innerWidth,
-      height: innerHeight,
-      method: 'default'
-    })
-    dispatch('setFileName', fileName).then(() => { initEpub() })
-
     // 閱讀器初始化相關邏輯
-    const initEpub = () => {
+    const initEpub = (url) => {
+      const book = new Epub(url)
       dispatch('setCurrentBook', book) // 將 book 對象存進 store
-      initRendition() // 閱讀器渲染
-      initGesture() // 閱讀器手勢
+      initRendition(store) // 閱讀器渲染
+      initGesture(store) // 閱讀器手勢
       book.ready
         .then(() => {
           return book.locations.generate(750 * (window.innerWidth / 375) * (getFontSize(fileName) / 16))
@@ -86,7 +118,12 @@ export default {
         .then(() => dispatch('setBookAvailable', true))
         .then(() => refreshLocation()) // 載入閱讀進度
     }
-    const initRendition = () => { // 設定電子書初始樣式
+    const initRendition = (store) => { // 設定電子書初始樣式
+      const rendition = store.getters.currentBook.renderTo('read', {
+        width: innerWidth,
+        height: innerHeight,
+        method: 'default'
+      })
       const location = getLocation(fileName)
       display(location, () => {
         initTheme(themes)
@@ -105,7 +142,8 @@ export default {
         ]).then(() => console.log('字體 OK'))
       })
     }
-    const initGesture = () => { // 設定電子書手勢
+    const initGesture = (store) => { // 設定電子書手勢
+      const rendition = store.getters.currentBook
       rendition.on('touchstart', event => {
         rendition.touchStartX = event.changedTouches[0].clientX
         rendition.touchStartTime = event.timeStamp
@@ -124,11 +162,28 @@ export default {
         event.stopPropagation()
       })
     }
-
+    onMounted(() => {
+      const books = route.params.fileName.split('|')
+      const fileName = books[1]
+      getLocalForage(fileName, (err, blob) => {
+        if (!err && blob) {
+          console.log('找到離線緩存電子書')
+          dispatch('setFileName', books.join('/'))
+            .then(() => { initEpub(blob) })
+        } else {
+          console.log('在線獲取電子書')
+          dispatch('setFileName', route.params.fileName.split('|').join('/'))
+            .then(() => { initEpub(url) })
+        }
+      })
+    })
     return {
       handleMaskClick,
       pullDown,
-      pullDownEnd
+      pullDownEnd,
+      handleMouseEnter,
+      handleMouseMove,
+      handleMouseEnd
     }
   }
 }

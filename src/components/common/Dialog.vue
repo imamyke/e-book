@@ -5,8 +5,7 @@
         <div class="dialog-title-wrapper">
           <span class="dialog-title-text">{{title}}</span>
         </div>
-        <slot>
-        </slot>
+        <slot></slot>
         <div class="dialog-btn-wrapper">
           <slot name="btn">
             <div class="dialog-btn" @click="hide">{{$t('shelf.cancel')}}</div>
@@ -19,24 +18,25 @@
 </template>
 
 <script>
-  export default {
-    props: {
-      title: String
-    },
-    data() {
-      return {
-        visible: false
-      }
-    },
-    methods: {
-      show() {
-        this.visible = true
-      },
-      hide() {
-        this.visible = false
-      }
+import { ref } from 'vue'
+export default {
+  name: 'Dialog',
+  props: ['title'],
+  setup () {
+    const visible = ref(false)
+    const show = () => {
+      visible.value = true
+    }
+    const hide = () => {
+      visible.value = false
+    }
+    return {
+      visible,
+      show,
+      hide
     }
   }
+}
 </script>
 
 <style lang="scss" rel="stylesheet/scss" scoped>

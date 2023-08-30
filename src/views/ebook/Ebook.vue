@@ -7,6 +7,8 @@
     <ebook-reader />
     <ebook-menu />
     <ebook-bookmark />
+    <ebook-header />
+    <ebook-footer />
   </div>
 </template>
 <script>
@@ -14,12 +16,22 @@ import { onMounted, onBeforeUnmount, watch, getCurrentInstance } from 'vue'
 import { useStore } from 'vuex'
 import { getReadTime, saveReadTime } from '@/utils/localStorage'
 import EbookTitle from '@/components/ebook/ebookTitle/EbookTitle.vue'
+import EbookHeader from '@/components/ebook/ebookHeader/EbookHeader.vue'
 import EbookReader from '@/components/ebook/EbookReader/EbookReader.vue'
 import EbookMenu from '@/components/ebook/ebookMenu/EbookMenu.vue'
 import EbookBookmark from '@/components/ebook/EbookBookmark/EbookBookmark'
+import EbookFooter from '@/components/ebook/ebookFooter/EbookFooter.vue'
+
 export default {
   name: 'Ebook',
-  components: { EbookReader, EbookTitle, EbookMenu, EbookBookmark },
+  components: {
+    EbookReader,
+    EbookTitle,
+    EbookMenu,
+    EbookBookmark,
+    EbookHeader,
+    EbookFooter
+  },
   setup () {
     const { getters } = useStore()
     const { ctx } = getCurrentInstance()

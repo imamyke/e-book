@@ -26,7 +26,6 @@ export default {
       }
     })
     const refresh = () => {
-      console.log(props.height, props.width)
       if (props.height && props.width) {
         ctx.$refs.bookmarkRef.style.borderWidth = `${px2rem(props.height - 5)}rem ${px2rem(props.width / 2)}rem ${px2rem(5)}rem ${px2rem(props.width / 2)}rem`
       }

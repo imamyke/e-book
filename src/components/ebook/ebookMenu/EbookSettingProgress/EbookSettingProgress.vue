@@ -45,7 +45,7 @@
 </template>
 
 <script>
-import { onUpdated, getCurrentInstance, computed } from 'vue'
+import { onUpdated, getCurrentInstance } from 'vue'
 import { useStore } from 'vuex'
 import { ebookMixin } from '@/utils/mixin'
 import { useInitEffect } from '@/components/ebook/EbookReader/useInitEffect'
@@ -58,16 +58,12 @@ export default {
     const store = useStore()
     const { dispatch, getters } = store
     const { ctx, proxy } = getCurrentInstance()
-    const { getReadTimeText } = useProgressEffect(store)
+    const { getReadTimeText, getSectionName } = useProgressEffect(store)
     const { display } = useInitEffect(store)
     onUpdated(() => {
       updateProgressBg()
     })
 
-    // 顯示章節名
-    const getSectionName = computed(() => {
-      return getters.navigation?.[getters.section].label || ''
-    })
     // 進度條基礎邏輯
     const displayProgress = () => { // 顯示進度條
       const cfi = getters.currentBook.locations.cfiFromPercentage(getters.progress / 100)
@@ -143,7 +139,7 @@ export default {
     position: absolute;
     bottom: px2rem(48);
     left: 0;
-    z-index: 160;
+    z-index: 210;
     width: 100%;
     height: px2rem(90);
     background: white;
